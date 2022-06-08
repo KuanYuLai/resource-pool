@@ -2,6 +2,7 @@ package pool
 
 import (
 	"context"
+	"sync"
 	"time"
 )
 
@@ -15,6 +16,7 @@ type Pool[T any] interface {
 }
 
 type ResourcePool[T any] struct {
+	lock        sync.Mutex
 	resource    func(context.Context) (T, error)
 	idlePool    []T
 	maxIdleSize int
@@ -22,22 +24,34 @@ type ResourcePool[T any] struct {
 }
 
 func (r *ResourcePool[T]) Acquire(ctx context.Context) (T, error) {
+	r.lock.Lock()
 	if len(r.idlePool) == 0 {
+		r.lock.Unlock()
 		return r.resource(ctx)
 	}
 	item := r.idlePool[0]
 	r.idlePool = r.idlePool[1:]
+	r.lock.Unlock()
 	return item, nil
 }
 
 func (r *ResourcePool[T]) Release(item T) {
-	if len(r.idlePool) < r.maxIdleSize {
-		r.idlePool = append(r.idlePool, item)
+	r.lock.Lock()
+	if len(r.idlePool) > r.maxIdleSize {
+		// clear variable for gc
+		item = *new(T)
+		r.lock.Unlock()
+		return
 	}
+	r.idlePool = append(r.idlePool, item)
+	r.lock.Unlock()
 }
 
 func (r *ResourcePool[T]) NumIdle() int {
-	return len(r.idlePool)
+	r.lock.Lock()
+	l := len(r.idlePool)
+	r.lock.Unlock()
+	return l
 }
 
 // New ..
