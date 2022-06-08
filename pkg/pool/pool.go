@@ -4,8 +4,6 @@ import (
 	"context"
 	"sync"
 	"time"
-
-	"github.com/KuanYuLai/resource-pool_Dcard/pkg/pool/queue"
 )
 
 type Pool[T any] interface {
@@ -18,7 +16,7 @@ type Pool[T any] interface {
 }
 
 type ResourcePool[T any] struct {
-	lock        sync.Mutex
+	lock        *sync.Mutex
 	resource    func(context.Context) (T, error)
 	idlePool    []T
 	maxIdleSize int
@@ -68,6 +66,7 @@ func New[T any](
 	maxIdleTime time.Duration,
 ) Pool[T] {
 	return &ResourcePool[T]{
+		lock:        new(sync.Mutex),
 		resource:    creator,
 		maxIdleSize: maxIdleSize,
 		maxIdleTime: maxIdleTime,

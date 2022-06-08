@@ -4,14 +4,14 @@ import "sync"
 
 type (
 	node[T any] struct {
-		lock         sync.Mutex
+		lock         *sync.Mutex
 		previousNode *node[T]
 		nextNode     *node[T]
 		value        T
 	}
 
 	Queue[T any] struct {
-		lock   sync.Mutex
+		lock   *sync.Mutex
 		head   *node[T]
 		tail   *node[T]
 		length int
@@ -20,7 +20,9 @@ type (
 
 // NewQueue ...
 func NewQueue[T any]() *Queue[T] {
-	return &Queue[T]{}
+	return &Queue[T]{
+		lock: new(sync.Mutex),
+	}
 }
 
 // Pop remove the first node in queue
