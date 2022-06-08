@@ -22,7 +22,6 @@ type ResourcePool[T any] struct {
 	resource    func(context.Context) (T, error)
 	idlePool    *queue.Queue[T]
 	maxIdleSize int
-	maxIdleTime time.Duration
 }
 
 func (r *ResourcePool[T]) Acquire(ctx context.Context) (T, error) {
@@ -69,7 +68,6 @@ func New[T any](
 		lock:        new(sync.Mutex),
 		resource:    creator,
 		maxIdleSize: maxIdleSize,
-		maxIdleTime: maxIdleTime,
-		idlePool:    queue.NewQueue[T](),
+		idlePool:    queue.NewQueue[T](maxIdleTime),
 	}
 }
