@@ -31,8 +31,6 @@ func (r *ResourcePool[T]) Acquire(ctx context.Context) (T, error) {
 		r.lock.Unlock()
 		return r.resource(ctx)
 	}
-	// get item from queue
-	// TODO: implement dqueue using linked list
 	item := r.idlePool.Pop()
 	r.lock.Unlock()
 	return item, nil
@@ -40,7 +38,7 @@ func (r *ResourcePool[T]) Acquire(ctx context.Context) (T, error) {
 
 func (r *ResourcePool[T]) Release(item T) {
 	r.lock.Lock()
-	if r.idlePool.Length() > r.maxIdleSize {
+	if r.idlePool.Length() >= r.maxIdleSize {
 		// clear variable for gc
 		item = *new(T)
 		r.lock.Unlock()
