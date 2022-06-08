@@ -59,3 +59,14 @@ func (q *Queue[T]) Length() int {
 	q.lock.Unlock()
 	return l
 }
+
+func (q *Queue[T]) DeleteNode(node *node[T]) {
+}
+
+func (q *Queue[T]) isTail(node *node[T]) bool {
+	return q.tail == node
+}
+
+func (q *Queue[T]) isHead(node *node[T]) bool {
+	return q.head == node
+}

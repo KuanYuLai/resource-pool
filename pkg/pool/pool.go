@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/KuanYuLai/resource-pool_Dcard/pkg/queue"
 )
 
 type Pool[T any] interface {
@@ -18,40 +20,39 @@ type Pool[T any] interface {
 type ResourcePool[T any] struct {
 	lock        *sync.Mutex
 	resource    func(context.Context) (T, error)
-	idlePool    []T
+	idlePool    *queue.Queue[T]
 	maxIdleSize int
 	maxIdleTime time.Duration
 }
 
 func (r *ResourcePool[T]) Acquire(ctx context.Context) (T, error) {
 	r.lock.Lock()
-	if len(r.idlePool) == 0 {
+	if r.idlePool.Length() == 0 {
 		r.lock.Unlock()
 		return r.resource(ctx)
 	}
 	// get item from queue
 	// TODO: implement dqueue using linked list
-	item := r.idlePool[0]
-	r.idlePool = r.idlePool[1:]
+	item := r.idlePool.Pop()
 	r.lock.Unlock()
 	return item, nil
 }
 
 func (r *ResourcePool[T]) Release(item T) {
 	r.lock.Lock()
-	if len(r.idlePool) > r.maxIdleSize {
+	if r.idlePool.Length() > r.maxIdleSize {
 		// clear variable for gc
 		item = *new(T)
 		r.lock.Unlock()
 		return
 	}
-	r.idlePool = append(r.idlePool, item)
+	r.idlePool.PushBack(item)
 	r.lock.Unlock()
 }
 
 func (r *ResourcePool[T]) NumIdle() int {
 	r.lock.Lock()
-	l := len(r.idlePool)
+	l := r.idlePool.Length()
 	r.lock.Unlock()
 	return l
 }
@@ -70,6 +71,6 @@ func New[T any](
 		resource:    creator,
 		maxIdleSize: maxIdleSize,
 		maxIdleTime: maxIdleTime,
-		idlePool:    make([]T, 0),
+		idlePool:    queue.NewQueue[T](),
 	}
 }
