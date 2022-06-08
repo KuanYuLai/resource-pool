@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/KuanYuLai/resource-pool_Dcard/pkg/pool/queue"
 )
 
 type Pool[T any] interface {
@@ -29,6 +31,8 @@ func (r *ResourcePool[T]) Acquire(ctx context.Context) (T, error) {
 		r.lock.Unlock()
 		return r.resource(ctx)
 	}
+	// get item from queue
+	// TODO: implement dqueue using linked list
 	item := r.idlePool[0]
 	r.idlePool = r.idlePool[1:]
 	r.lock.Unlock()
