@@ -1,6 +1,8 @@
 package queue
 
-import "sync"
+import (
+	"sync"
+)
 
 type (
 	node[T any] struct {
@@ -27,10 +29,22 @@ func NewQueue[T any]() *Queue[T] {
 
 // Pop remove the first node in queue
 func (q *Queue[T]) Pop() T {
-	firstNode := new(node[T])
+	firstNode := &node[T]{
+		lock: new(sync.Mutex),
+	}
 	q.lock.Lock()
 	firstNode = q.head
 	q.head = firstNode.nextNode
+
+	// unlink firstNode to chain
+	if firstNode.nextNode != nil {
+		firstNode.lock.Lock()
+		firstNode.nextNode.lock.Lock()
+		firstNode.nextNode.previousNode = nil
+		firstNode.nextNode.lock.Unlock()
+		firstNode.lock.Unlock()
+	}
+
 	q.length--
 	q.lock.Unlock()
 	return firstNode.value
@@ -40,11 +54,13 @@ func (q *Queue[T]) Pop() T {
 func (q *Queue[T]) PushBack(value T) {
 	q.lock.Lock()
 	lastNode := &node[T]{
+		lock:         new(sync.Mutex),
 		previousNode: q.tail,
 		value:        value,
 	}
 	if q.length == 0 {
 		q.head = lastNode
+		q.tail = lastNode
 	} else {
 		q.tail.nextNode = lastNode
 	}

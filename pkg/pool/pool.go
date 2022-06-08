@@ -27,6 +27,7 @@ type ResourcePool[T any] struct {
 
 func (r *ResourcePool[T]) Acquire(ctx context.Context) (T, error) {
 	r.lock.Lock()
+	// create new item if there isn't any idle item in the pool
 	if r.idlePool.Length() == 0 {
 		r.lock.Unlock()
 		return r.resource(ctx)

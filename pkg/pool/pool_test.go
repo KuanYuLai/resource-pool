@@ -14,7 +14,7 @@ func TestBasicPoolFunction(t *testing.T) {
 	newPool := New(func(ctx context.Context) (*testStruct, error) {
 		v := new(testStruct)
 		return v, nil
-	}, 1, time.Second)
+	}, 2, time.Second)
 
 	item1, err := newPool.Acquire(context.Background())
 	if err != nil {
@@ -41,7 +41,7 @@ func TestBasicPoolFunction(t *testing.T) {
 		t.Errorf("name value should be 'item1' but got %s", item.name)
 	}
 	if newPool.NumIdle() != 1 {
-		t.Errorf("pool length should be 0 but got %d", newPool.NumIdle())
+		t.Errorf("pool length should be 1 but got %d", newPool.NumIdle())
 	}
 }
 
