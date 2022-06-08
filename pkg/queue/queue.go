@@ -56,6 +56,9 @@ func (q *Queue[T]) Pop() T {
 		firstNode.lock.Unlock()
 	}
 
+	// stop the idleTimer to prevent node deletion
+	firstNode.acquired <- struct{}{}
+	close(firstNode.acquired)
 	q.length--
 	q.lock.Unlock()
 	return firstNode.value
@@ -64,17 +67,19 @@ func (q *Queue[T]) Pop() T {
 // Pop remove the first node in queue
 func (q *Queue[T]) PushBack(value T) {
 	q.lock.Lock()
-	lastNode := &node[T]{
-		lock:         new(sync.Mutex),
-		previousNode: q.tail,
-		value:        value,
-	}
+	lastNode := newNodePtr[T]()
+	lastNode.previousNode = q.tail
+	lastNode.value = value
+
 	if q.length == 0 {
 		q.head = lastNode
 		q.tail = lastNode
 	} else {
 		q.tail.nextNode = lastNode
 	}
+
+	// create a goroutine to time the node's idle time
+	go idleTimer(q.maxIdleTime, q, lastNode)
 
 	q.tail = lastNode
 	q.length++
@@ -88,12 +93,12 @@ func (q *Queue[T]) Length() int {
 	return l
 }
 
-func idleTimer[T any](acquired <-chan struct{}, timeLimit time.Duration, q *Queue[T], node *node[T]) {
+func idleTimer[T any](timeLimit time.Duration, q *Queue[T], node *node[T]) {
 	select {
 	case <-time.After(timeLimit):
 		q.deleteNode(node)
 		return
-	case <-acquired:
+	case <-node.acquired:
 		return
 	}
 }

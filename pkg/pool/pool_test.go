@@ -32,7 +32,6 @@ func TestBasicPoolFunction(t *testing.T) {
 	item2.name = "item2"
 	newPool.Release(item1)
 	newPool.Release(item2)
-
 	if newPool.NumIdle() != 2 {
 		t.Errorf("pool length should be 2 but got %d", newPool.NumIdle())
 	}
