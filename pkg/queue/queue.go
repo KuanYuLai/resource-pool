@@ -2,7 +2,6 @@ package queue
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
@@ -11,6 +10,7 @@ import (
 )
 
 type (
+	// node store value of T type
 	node[T any] struct {
 		lock         *sync.Mutex
 		previousNode *node[T]
@@ -19,6 +19,7 @@ type (
 		acquired     chan struct{}
 	}
 
+	// Queue a queue design for resource pool
 	Queue[T any] struct {
 		lock        *sync.Mutex
 		head        *node[T]
@@ -28,6 +29,7 @@ type (
 	}
 )
 
+// newNodePtr returns a new node pointer
 func newNodePtr[T any]() *node[T] {
 	node := &node[T]{
 		lock:     new(sync.Mutex),
@@ -36,7 +38,7 @@ func newNodePtr[T any]() *node[T] {
 	return node
 }
 
-// NewQueue ...
+// NewQueue returns a new queue
 func NewQueue[T any](maxIdleTime time.Duration) *Queue[T] {
 	return &Queue[T]{
 		lock:        new(sync.Mutex),
@@ -44,7 +46,7 @@ func NewQueue[T any](maxIdleTime time.Duration) *Queue[T] {
 	}
 }
 
-// Pop remove the first node in queue
+// Pop remove the first node in the queue
 func (q *Queue[T]) Pop() T {
 	firstNode := newNodePtr[T]()
 	q.lock.Lock()
@@ -68,7 +70,7 @@ func (q *Queue[T]) Pop() T {
 	return firstNode.value
 }
 
-// Pop remove the first node in queue
+// PushBack adds a node to the end of the queue
 func (q *Queue[T]) PushBack(value T) {
 	q.lock.Lock()
 	lastNode := newNodePtr[T]()
@@ -90,6 +92,7 @@ func (q *Queue[T]) PushBack(value T) {
 	q.lock.Unlock()
 }
 
+// Length return the length of the queue
 func (q *Queue[T]) Length() int {
 	q.lock.Lock()
 	l := q.length
@@ -97,10 +100,13 @@ func (q *Queue[T]) Length() int {
 	return l
 }
 
+// idleTimer time the idle time from the queue's setting. Delete the given node
+// when the time is up.
 func idleTimer[T any](q *Queue[T], node *node[T]) {
 	osSignal := make(chan os.Signal)
 	signal.Notify(osSignal, syscall.SIGINT, syscall.SIGTERM)
 	ctx, cancel := context.WithTimeout(context.Background(), q.maxIdleTime)
+	defer close(osSignal)
 	defer cancel()
 	select {
 	case <-ctx.Done():
@@ -113,6 +119,7 @@ func idleTimer[T any](q *Queue[T], node *node[T]) {
 	}
 }
 
+// deleteNode delete the given node from the queue
 func (q *Queue[T]) deleteNode(node *node[T]) {
 	q.lock.Lock()
 	node.lock.Lock()
@@ -143,21 +150,24 @@ func (q *Queue[T]) deleteNode(node *node[T]) {
 	q.lock.Unlock()
 }
 
-func printAllNodes[T any](q *Queue[T]) {
-	node := q.head
-	hasNext := true
-	for hasNext {
-		fmt.Printf("%v\t", node.value)
-		node = node.nextNode
-		hasNext = node != nil
-	}
-	fmt.Printf("\n")
-}
+// printAllNodes prints the entire queue.
+// func printAllNodes[T any](q *Queue[T]) {
+// 	node := q.head
+// 	hasNext := true
+// 	for hasNext {
+// 		fmt.Printf("%v\t", node.value)
+// 		node = node.nextNode
+// 		hasNext = node != nil
+// 	}
+// 	fmt.Printf("\n")
+// }
 
+// isTail check if the given node is the last item in the queue
 func (q *Queue[T]) isTail(node *node[T]) bool {
 	return q.tail == node
 }
 
+// isHead check if the given node is the first item in the queue
 func (q *Queue[T]) isHead(node *node[T]) bool {
 	return q.head == node
 }
