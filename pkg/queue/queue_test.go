@@ -43,9 +43,10 @@ func TestIdleTimer(t *testing.T) {
 	newQueue.head = node1
 	newQueue.tail = node3
 	newQueue.length = 3
+	newQueue.maxIdleTime = 1 * time.Second
 
 	// test time out
-	idleTimer(1*time.Second, newQueue, node2)
+	idleTimer(newQueue, node2)
 	if newQueue.length != 2 {
 		t.Errorf("length should be 2 but got %d", newQueue.length)
 	}
@@ -54,8 +55,9 @@ func TestIdleTimer(t *testing.T) {
 		t.Errorf("nodes don't have proper relation")
 	}
 
+	newQueue.maxIdleTime = 2 * time.Second
 	// test acquired
-	go idleTimer(2*time.Second, newQueue, node3)
+	go idleTimer(newQueue, node3)
 	time.Sleep(500 * time.Millisecond)
 	node3.acquired <- struct{}{}
 	close(node3.acquired)

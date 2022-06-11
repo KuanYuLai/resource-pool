@@ -1,8 +1,12 @@
 package queue
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -79,7 +83,7 @@ func (q *Queue[T]) PushBack(value T) {
 	}
 
 	// create a goroutine to time the node's idle time
-	go idleTimer(q.maxIdleTime, q, lastNode)
+	go idleTimer(q, lastNode)
 
 	q.tail = lastNode
 	q.length++
@@ -93,12 +97,18 @@ func (q *Queue[T]) Length() int {
 	return l
 }
 
-func idleTimer[T any](timeLimit time.Duration, q *Queue[T], node *node[T]) {
+func idleTimer[T any](q *Queue[T], node *node[T]) {
+	osSignal := make(chan os.Signal)
+	signal.Notify(osSignal, syscall.SIGINT, syscall.SIGTERM)
+	ctx, cancel := context.WithTimeout(context.Background(), q.maxIdleTime)
+	defer cancel()
 	select {
-	case <-time.After(timeLimit):
+	case <-ctx.Done():
 		q.deleteNode(node)
 		return
 	case <-node.acquired:
+		return
+	case <-osSignal:
 		return
 	}
 }
