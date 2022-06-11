@@ -145,6 +145,8 @@ func (q *Queue[T]) deleteNode(node *node[T]) {
 	if q.isTail(node) {
 		q.tail = node.previousNode
 	}
+
+	close(node.acquired)
 	node.lock.Unlock()
 	q.length--
 	q.lock.Unlock()
