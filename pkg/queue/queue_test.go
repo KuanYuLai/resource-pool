@@ -46,6 +46,9 @@ func TestIdleTimer(t *testing.T) {
 	newQueue.maxIdleTime = 1 * time.Second
 
 	// test time out
+	if newQueue.length != 3 {
+		t.Errorf("length should be 3 but got %d", newQueue.length)
+	}
 	idleTimer(newQueue, node2)
 	if newQueue.length != 2 {
 		t.Errorf("length should be 2 but got %d", newQueue.length)
@@ -56,12 +59,19 @@ func TestIdleTimer(t *testing.T) {
 	}
 
 	newQueue.maxIdleTime = 2 * time.Second
+
 	// test acquired
+	if newQueue.tail != node3 {
+		t.Errorf("tail node should be node3")
+	}
 	go idleTimer(newQueue, node3)
 	time.Sleep(500 * time.Millisecond)
 	node3.acquired <- struct{}{}
 	close(node3.acquired)
 
+	if newQueue.tail != node3 {
+		t.Errorf("tail node should be node3")
+	}
 	if newQueue.length != 2 {
 		t.Errorf("length should be 2 but got %d", newQueue.length)
 	}
