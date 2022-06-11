@@ -5,7 +5,7 @@
 
 在這個 resource pool 中, 我沒有將 maxIdleSize 的數量當做使用者可以拿取 resource 的最大數量。原因為，在設定 maxIdleSize 時，只能大略估算使用者需要的數量，無法非常精準，所以當需求超過 maxIdleSize 時，使用者依然可以要的到 resource，不會因為 resource 數量限制而卡住。這樣的作法也有可能發生給太多 resource 導致機器當機，但我認為如果遇到這種情況，也是一個系統給出的信號，有可能是使用者要了太多不必要的資源，也有可能是設定 maxIdleSize 時低估了使用者的需求。
 
-#Usage
+# Usage
 > :warning: This program require **go 1.18 or newer**!
 
 Run demo function:
