@@ -28,7 +28,7 @@ func main() {
 
 	// acquire 4 items from the pool
 	fmt.Println("\nStep2: ")
-	fmt.Println("Acquire 4 items and assign company names 'Dcard', 'Otto', 'Facebook', and 'Twitter' respectively")
+	fmt.Println("Acquire 4 items and assign company names 'Dcard', 'Dtto', 'Facebook', and 'Twitter' respectively")
 	item1, err := p.Acquire(context.Background())
 	if err != nil {
 		log.Fatal(err)
@@ -54,7 +54,7 @@ func main() {
 
 	// assign values to every item
 	item1.name = "Dcard"
-	item2.name = "Otto"
+	item2.name = "Dtto"
 	item3.name = "Facebook"
 	item4.name = "Twitter"
 
