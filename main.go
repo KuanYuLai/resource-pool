@@ -53,10 +53,10 @@ func main() {
 	}
 
 	// assign values to every item
-	item1.name = "Dcard"
-	item2.name = "Dtto"
+	item1.name = "Google"
+	item2.name = "Netflix"
 	item3.name = "Facebook"
-	item4.name = "Twitter"
+	item4.name = "Uber"
 
 	fmt.Printf("item1: %+v\n", item1)
 	fmt.Printf("item2: %+v\n", item2)
